@@ -1,0 +1,1174 @@
+openapi: 3.0.0
+info:
+  title: AdServer Creative Management
+  version: "1.0"
+servers:
+- description: Internal Development
+  url: http://api.creative.ads.sd.internal.us-east-2.bluemsdev.team
+- description: Internal Production
+  url: http://api.creative.ads.sd.internal.us-east-1.bluems.com
+- description: Local
+  url: http://localhost:5065
+tags:
+- name: Creative Groups
+- name: Creatives
+- name: Domains
+paths:
+  /v1/accounts/{accountId}/creatives:
+    get:
+      description: Returns a pageable list of creatives.
+      operationId: ListCreatives
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: "The applicable filters, a json object according with `CreativeFilters`."
+        explode: true
+        in: query
+        name: filters
+        required: false
+        schema:
+          example: "{}"
+          type: string
+        style: form
+      - description: The page size.
+        explode: true
+        in: query
+        name: pageSize
+        required: false
+        schema:
+          default: 10
+          example: 10
+          maximum: 1000
+          minimum: 1
+          type: number
+        style: form
+      - allowEmptyValue: true
+        description: The page token from which to continue listing.
+        explode: true
+        in: query
+        name: pageToken
+        required: false
+        schema:
+          example: AIUHSDJANBDHOH3
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreativePage'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Bad Request
+      summary: List Creatives
+      tags:
+      - Creatives
+    post:
+      description: |-
+        Creates a new creative.
+
+        **Notes:**
+        1. Publishes event `CreativeCreatedEvent` with the creative as message.
+      operationId: CreateCreative
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreativeCreateFields'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Creative'
+          description: Created
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Bad Request
+      summary: Create Creative
+      tags:
+      - Creatives
+  /v1/accounts/{accountId}/creatives/{creativeId}:
+    delete:
+      description: |-
+        Deletes a creative.
+
+        **Notes:**
+        1. You can only delete creatives that are not being used in any creative group.
+        1. Publishes event `CreativeDeletedEvent` with the original creative as message.
+      operationId: DeleteCreative
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: The ID of the creative.
+        explode: false
+        in: path
+        name: creativeId
+        required: true
+        schema:
+          example: 0ujssxh0cECutqzMgbtXSGnjorm
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Bad Request
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Not Found
+      summary: Delete Creative
+      tags:
+      - Creatives
+    get:
+      description: Returns a creative by its ID.
+      operationId: GetCreative
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: The ID of the creative.
+        explode: false
+        in: path
+        name: creativeId
+        required: true
+        schema:
+          example: 0ujssxh0cECutqzMgbtXSGnjorm
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Creative'
+          description: OK
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Not Found
+      summary: Get Creative
+      tags:
+      - Creatives
+    patch:
+      description: |-
+        Patches a creative.
+
+        **Notes:**
+        1. If the banner snippet is changed, the creative status must be set back to `draft`.
+        1. Publishes event `CreativePatchedEvent` with the updated creative as message.
+      operationId: PatchCreative
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: The ID of the creative.
+        explode: false
+        in: path
+        name: creativeId
+        required: true
+        schema:
+          example: 0ujssxh0cECutqzMgbtXSGnjorm
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/merge-patch+json:
+            examples: {}
+            schema:
+              $ref: '#/components/schemas/CreativePatchFields'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Creative'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Bad Request
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Not Found
+      summary: Patch Creative
+      tags:
+      - Creatives
+  /v1/accounts/{accountId}/creatives/{creativeId}:send-for-review:
+    post:
+      description: |-
+        Initiates the review process for the given creative.
+
+        **Notes:**
+        1. On the current version, the review process will be only simulated. All reviews will be automatically approved.
+        1. Publishes event `CreativePatchedEvent` with the updated creative as message (after automatic approval).
+      operationId: SendCreativeForReview
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: The ID of the creative.
+        explode: false
+        in: path
+        name: creativeId
+        required: true
+        schema:
+          example: 0ujssxh0cECutqzMgbtXSGnjorm
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Bad Request
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Not Found
+      summary: Send Creative for Review
+      tags:
+      - Creatives
+  /v1/accounts/{accountId}/creative-groups:
+    get:
+      description: Returns a pageable list of creative groups.
+      operationId: ListCreativeGroups
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: "The applicable filters, a json object according with `CreativeGroupFilters`."
+        explode: true
+        in: query
+        name: filters
+        required: false
+        schema:
+          example: "{}"
+          type: string
+        style: form
+      - description: The page size.
+        explode: true
+        in: query
+        name: pageSize
+        required: false
+        schema:
+          default: 10
+          example: 10
+          maximum: 1000
+          minimum: 1
+          type: number
+        style: form
+      - allowEmptyValue: true
+        description: The page token from which to continue listing.
+        explode: true
+        in: query
+        name: pageToken
+        required: false
+        schema:
+          example: AIUHSDJANBDHOH3
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreativeGroupPage'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Bad Request
+      summary: List Creative Groups
+      tags:
+      - Creative Groups
+    post:
+      description: |-
+        Creates a new creative group.
+
+        **Notes:**
+        1. All creatives must match the *domain* and *spec* defined (e.g. a banner 300x600 linking to example.com).
+        1. The creative group must have at least one creative.
+        1. Publishes event `CreativeGroupCreatedEvent` with the creative group as message.
+      operationId: CreateCreativeGroup
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreativeGroupCreateFields'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreativeGroup'
+          description: Created
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Bad Request
+      summary: Create Creative Group
+      tags:
+      - Creative Groups
+  /v1/accounts/{accountId}/creative-groups/{creativeGroupId}:
+    delete:
+      description: |-
+        Deletes a creative group.
+
+        **Notes:**
+        1. Publishes event `CreativeGroupDeletedEvent` with the original creative group as message.
+      operationId: DeleteCreativeGroup
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: The ID of the creative group.
+        explode: false
+        in: path
+        name: creativeGroupId
+        required: true
+        schema:
+          example: 0ujsszwN8NRY24YaXiTIE2VWDTS
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: No Content
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Not Found
+      summary: Delete Creative Group
+      tags:
+      - Creative Groups
+    get:
+      description: Returns a creative group by its ID.
+      operationId: GetCreativeGroup
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: The ID of the creative group.
+        explode: false
+        in: path
+        name: creativeGroupId
+        required: true
+        schema:
+          example: 0ujsszwN8NRY24YaXiTIE2VWDTS
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreativeGroup'
+          description: OK
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Not Found
+      summary: Get Creative Group
+      tags:
+      - Creative Groups
+    patch:
+      description: |-
+        Patches a creative group.
+
+        **Notes:**
+        1. All creatives must match the *domain* and *spec* defined (e.g. a banner 300x600 linking to example.com).
+        1. Publishes event `CreativeGroupPatchedEvent` with the updated creative group as message.
+      operationId: PatchCreativeGroup
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: The ID of the creative group.
+        explode: false
+        in: path
+        name: creativeGroupId
+        required: true
+        schema:
+          example: 0ujsszwN8NRY24YaXiTIE2VWDTS
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: '#/components/schemas/CreativeGroupPatchFields'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreativeGroup'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Bad Request
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Not Found
+      summary: Patch Creative Group
+      tags:
+      - Creative Groups
+  /v1/accounts/{accountId}/creative-groups/{creativeGroupId}/creatives:available:
+    get:
+      description: |-
+        Returns the creatives that are available for the given creative group.
+
+        **Notes:**
+        1. Only the creatives with status of `approved` and `enabled` equals to `true` can be returned.
+      operationId: GetCreativeGroupAvailableCreatives
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: The ID of the creative group.
+        explode: false
+        in: path
+        name: creativeGroupId
+        required: true
+        schema:
+          example: 0ujsszwN8NRY24YaXiTIE2VWDTS
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AvailableCreative'
+                type: array
+          description: OK
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Not Found
+      summary: Get Creative Group Available Creatives
+      tags:
+      - Creative Groups
+      x-internal: false
+  /v1/accounts/{accountId}/domains:
+    get:
+      description: Returns a list of all domains in use by creatives or creative groups.
+      operationId: ListDomains
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: "The applicable filters, a json object according with `DomainFilters`."
+        explode: true
+        in: query
+        name: filters
+        required: false
+        schema:
+          example: "{\"name\":\"globo\",\"includeSuggestions\":true}"
+          type: string
+        style: form
+      - description: The page size.
+        explode: true
+        in: query
+        name: pageSize
+        required: false
+        schema:
+          default: 10
+          example: 10
+          maximum: 1000
+          minimum: 1
+          type: number
+        style: form
+      - allowEmptyValue: true
+        description: The page token from which to continue listing.
+        explode: true
+        in: query
+        name: pageToken
+        required: false
+        schema:
+          example: AIUHSDJANBDHOH3
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPage'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Bad Request
+      summary: List Domains
+      tags:
+      - Domains
+components:
+  parameters:
+    PageSize:
+      description: The page size.
+      explode: true
+      in: query
+      name: pageSize
+      required: false
+      schema:
+        default: 10
+        example: 10
+        maximum: 1000
+        minimum: 1
+        type: number
+      style: form
+    PageToken:
+      allowEmptyValue: true
+      description: The page token from which to continue listing.
+      explode: true
+      in: query
+      name: pageToken
+      required: false
+      schema:
+        example: AIUHSDJANBDHOH3
+        type: string
+      style: form
+    AccountId:
+      description: The ID of the account.
+      explode: false
+      in: path
+      name: accountId
+      required: true
+      schema:
+        example: "359312844241"
+        type: string
+      style: simple
+  responses:
+    BadRequest:
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+      description: Bad Request
+    NotFound:
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+      description: Not Found
+  schemas:
+    Creative:
+      allOf:
+      - properties:
+          creativeId:
+            description: The ID of the creative.
+            example: 0ujssxh0cECutqzMgbtXSGnjorm
+            type: string
+          status:
+            description: Indicates the status of the creative.
+            enum:
+            - draft
+            - in-review
+            - approved
+            example: approved
+            type: string
+          accountId:
+            description: The ID of the account that owns this creative.
+            example: "359312844241"
+            type: string
+          archived:
+            description: Indicates if it is archived.
+            example: false
+            type: boolean
+          enabled:
+            description: Indicates if the creative is enabled for usage.
+            example: true
+            type: boolean
+          tags:
+            description: Tags that the user can add to facilitate searching.
+            items:
+              example: weekend discount
+              type: string
+            type: array
+        required:
+        - accountId
+        - archived
+        - creativeId
+        - enabled
+        - status
+        - tags
+        type: object
+      - $ref: '#/components/schemas/CreativeCreateFields'
+      description: Represents some type of art that can be served in an Ad.
+      title: Creative
+    CreativeCreateFields:
+      allOf:
+      - properties:
+          domain:
+            description: The domain that this creative is going to redirect to.
+            example: example.com
+            type: string
+          name:
+            description: The name of the creative.
+            example: Example.com weekends discount banner 300x600
+            type: string
+          tags:
+            description: Tags that the user can add to facilitate searching.
+            items:
+              example: weekend discount
+              type: string
+            type: array
+          banner:
+            $ref: '#/components/schemas/CreativeCreateFields_allOf_banner'
+        required:
+        - domain
+        - name
+      description: '`Creative` required fields.'
+      title: CreativeCreateFields
+      type: object
+    CreativePatchFields:
+      allOf:
+      - properties:
+          name:
+            description: The name of the creative.
+            example: Example.com weekends discount banner 300x600
+            type: string
+          tags:
+            description: Tags that the user can add to facilitate searching.
+            items:
+              example: weekend discount
+              type: string
+            type: array
+          archived:
+            description: Indicates if it is archived.
+            type: boolean
+          enabled:
+            description: Indicates if the creative is enabled for usage.
+            type: boolean
+        type: object
+      - $ref: '#/components/schemas/CreativeFields'
+      description: '`Creative` editable fields.'
+      title: CreativePatchFields
+    CreativeFilters:
+      additionalProperties: false
+      description: Filters applicable to creatives.
+      properties:
+        search:
+          description: "Generic search that can match against id, name, tag and domain."
+          example: socks
+          type: string
+        creativeIds:
+          description: An array of IDs to search for.
+          items:
+            example: 0ujssxh0cECutqzMgbtXSGnjorm
+            type: string
+          type: array
+        creativeGroupIds:
+          description: The list of creative group IDs to search usage for.
+          items:
+            example: 0ujsszwN8NRY24YaXiTIE2VWDTS
+            type: string
+            x-stoplight:
+              id: plv3ifkgp3mx1
+          type: array
+          x-stoplight:
+            id: 16192ykjhjv8x
+        status:
+          description: The status to search for.
+          enum:
+          - draft
+          - in-review
+          - approved
+          example: approved
+          type: string
+        tag:
+          description: The tag to look for.
+          example: winter
+          type: string
+        domain:
+          description: The domain to filter.
+          example: example.com
+          type: string
+        archived:
+          description: "`true` to include only archived creatives, `false` to include\
+            \ only active, leave empty to include all."
+          type: boolean
+        name:
+          description: The name to search for.
+          example: socks
+          type: string
+        spec:
+          $ref: '#/components/schemas/CreativeSpec'
+        enabled:
+          description: "`true` to include only enabled creatives, `false` to include\
+            \ only disabled, leave empty to include all."
+          type: boolean
+      title: CreativeFilters
+      type: object
+    CreativePage:
+      additionalProperties: false
+      description: Represents a page of creatives.
+      example:
+        nextPageToken: kprVA0PjOy0y86PHZVSq
+        values:
+        - null
+        - null
+      properties:
+        values:
+          description: The values on this page.
+          items:
+            $ref: '#/components/schemas/Creative'
+          type: array
+        nextPageToken:
+          description: The token to be used to retrieve the next page.
+          example: kprVA0PjOy0y86PHZVSq
+          nullable: true
+          type: string
+      required:
+      - values
+      title: CreativePage
+      type: object
+    CreativeSpec:
+      additionalProperties: false
+      description: Specifies the requirements for creatives.
+      example:
+        banner:
+          width: 728
+          height: 90
+      properties:
+        banner:
+          $ref: '#/components/schemas/BannerSpec'
+      title: CreativeSpec
+      type: object
+    CreativeFields:
+      additionalProperties: false
+      description: Specifies editable fields that define creatives.
+      properties:
+        banner:
+          $ref: '#/components/schemas/BannerFields'
+      title: CreativeFields
+      type: object
+    BannerSpec:
+      additionalProperties: false
+      description: Specifies the requirements for banners.
+      example:
+        width: 728
+        height: 90
+      properties:
+        width:
+          description: The width of the banner in pixels.
+          example: 728
+          type: number
+        height:
+          description: The height of the banner in pixels.
+          example: 90
+          type: number
+      required:
+      - height
+      - width
+      title: BannerSpec
+      type: object
+    BannerFields:
+      additionalProperties: false
+      description: Describes a banner that can be served.
+      properties:
+        snippet:
+          description: The HTML snippet that will be rendered.
+          example: <a href="https://example.com/"><img src="https://via.placeholder.com/728x90"></a>
+          type: string
+      required:
+      - snippet
+      title: BannerFields
+      type: object
+    CreativeGroup:
+      allOf:
+      - properties:
+          creativeGroupId:
+            description: The ID of the creative group.
+            example: 0ujsszwN8NRY24YaXiTIE2VWDTS
+            type: string
+          accountId:
+            description: The ID of the account that owns this creative group.
+            example: 0ujsszgFvbiEr7CDgE3z8MAUPFt
+            type: string
+          tags:
+            description: Tags that the user can add to facilitate searching.
+            items:
+              example: weekends discount
+              type: string
+            type: array
+          archived:
+            description: Indicates if it is archived.
+            example: false
+            type: boolean
+        required:
+        - accountId
+        - archived
+        - creativeGroupId
+        - tags
+        type: object
+      - $ref: '#/components/schemas/CreativeGroupCreateFields'
+      description: Represents a group of creatives that can be rendered in an Ad and
+        the conditions for selecting which have priority.
+      title: CreativeGroup
+    CreativeGroupCreateFields:
+      description: '`CreativeGroup` required fields.'
+      example:
+        domain: example.com
+        name: Example.com weekends discount banners 300x600
+        creatives:
+        - weight: 100
+          creativeId: 0ujssxh0cECutqzMgbtXSGnjorm
+        - weight: 100
+          creativeId: 0ujssxh0cECutqzMgbtXSGnjorm
+        spec:
+          banner:
+            width: 728
+            height: 90
+        tags:
+        - tags
+        - tags
+      properties:
+        domain:
+          description: The domain that this creative group is going to redirect to.
+          example: example.com
+          type: string
+        name:
+          description: The name of the creative group.
+          example: Example.com weekends discount banners 300x600
+          type: string
+        spec:
+          $ref: '#/components/schemas/CreativeSpec'
+        creatives:
+          description: A list of all creatives that compose this creative group with
+            their relative weights.
+          items:
+            $ref: '#/components/schemas/WeightedCreative'
+          type: array
+        tags:
+          description: Tags that the user can add to facilitate searching.
+          items:
+            type: string
+          type: array
+      required:
+      - creatives
+      - domain
+      - name
+      - spec
+      title: CreativeGroupCreateFields
+      type: object
+    CreativeGroupPatchFields:
+      description: '`CreativeGroup` editable fields.'
+      properties:
+        name:
+          description: The description of this creative group.
+          example: Example.com weekends discount banners 300x600
+          type: string
+        creatives:
+          description: A list of all creatives that compose this creative group with
+            their relative weights.
+          items:
+            $ref: '#/components/schemas/WeightedCreative'
+          type: array
+        tags:
+          description: Tags that the user can add to facilitate searching.
+          items:
+            example: weekends discount
+            type: string
+          type: array
+        archived:
+          description: Indicates if it is archived.
+          example: false
+          type: boolean
+      title: CreativeGroupPatchFields
+      type: object
+    CreativeGroupFilters:
+      additionalProperties: false
+      description: Filters applicable to creative groups.
+      properties:
+        search:
+          description: "Generic search that can match against id, name, tag and domain."
+          example: socks
+          type: string
+        creativeIds:
+          description: The list of creative IDs in usage to look for.
+          items:
+            example: 0ujssxh0cECutqzMgbtXSGnjorm
+            type: string
+          type: array
+        domain:
+          description: The domain to filter.
+          example: example.com
+          type: string
+        name:
+          description: The description to search for.
+          example: socks
+          type: string
+        archived:
+          description: "`true` to include only archived creative groups, `false` to\
+            \ include only active, leave empty to include all."
+          example: false
+          type: boolean
+        tag:
+          description: The tags to look for.
+          example: winter
+          type: string
+        spec:
+          $ref: '#/components/schemas/CreativeSpec'
+      title: CreativeGroupFilters
+      type: object
+    CreativeGroupPage:
+      additionalProperties: false
+      description: Represents a page of creative groups.
+      example:
+        nextPageToken: kprVA0PjOy0y86PHZVSq
+        values:
+        - null
+        - null
+      properties:
+        values:
+          description: The values on this page.
+          items:
+            $ref: '#/components/schemas/CreativeGroup'
+          type: array
+        nextPageToken:
+          description: The token to be used to retrieve the next page.
+          example: kprVA0PjOy0y86PHZVSq
+          nullable: true
+          type: string
+      required:
+      - values
+      title: CreativeGroupPage
+      type: object
+    WeightedCreative:
+      additionalProperties: false
+      description: Represents a creative and its weight.
+      example:
+        weight: 100
+        creativeId: 0ujssxh0cECutqzMgbtXSGnjorm
+      properties:
+        creativeId:
+          description: The ID of the creative.
+          example: 0ujssxh0cECutqzMgbtXSGnjorm
+          type: string
+        weight:
+          description: The weight of the creative.
+          example: 100
+          maximum: 999
+          minimum: 0
+          type: number
+      required:
+      - creativeId
+      - weight
+      title: WeightedCreative
+      type: object
+    AvailableCreative:
+      allOf:
+      - $ref: '#/components/schemas/WeightedCreative'
+      - $ref: '#/components/schemas/CreativeFields'
+      description: Represents a creative that is available for printing with its relative
+        weight.
+      title: AvailableCreative
+    DomainPage:
+      additionalProperties: false
+      description: Represents a page of domains.
+      example:
+        nextPageToken: kprVA0PjOy0y86PHZVSq
+        values:
+        - values
+        - values
+      properties:
+        values:
+          description: The values on this page.
+          items:
+            type: string
+          type: array
+        nextPageToken:
+          description: The token to be used to retrieve the next page.
+          example: kprVA0PjOy0y86PHZVSq
+          nullable: true
+          type: string
+      required:
+      - values
+      title: DomainPage
+      type: object
+    DomainFilters:
+      additionalProperties: false
+      description: Filters applicable to domains.
+      properties:
+        name:
+          description: The name to search for.
+          example: creative
+          type: string
+      title: DomainFilters
+      type: object
+      x-stoplight:
+        id: xh6domk6babr8
+    ProblemDetails:
+      description: Represents a problem that happened.
+      properties:
+        type:
+          description: URI or relative path that defines what the problem is.
+          example: http://example.com/problems/already-available
+          type: string
+        title:
+          description: A short human-readable message of the problem type.
+          example: Cannot set product as available.
+          type: string
+        status:
+          description: The status member represents the same HTTP status code.
+          example: 400
+          type: integer
+        detail:
+          description: Human-readable explanation of the exact issue that occurred.
+          example: Product is already Available For Sale.
+          type: string
+      required:
+      - detail
+      - status
+      - title
+      - type
+      title: ProblemDetails
+      type: object
+    CreativeCreateFields_allOf_banner:
+      allOf:
+      - $ref: '#/components/schemas/BannerSpec'
+      - $ref: '#/components/schemas/BannerFields'
+      description: Specifies the banner.
+  securitySchemes: {}
+x-stoplight:
+  id: 2da452d2635ac

@@ -26,3 +26,24 @@ output "bms_creative" {
     value = bms_creative.creative_1
 }
 
+resource "bms_creative_group" "creative_group_1" {
+    name = "creating a creative group by terraform provider bms"
+    domain = "example.com"
+    tags = [ "resource", "group", "bms"]
+    spec = {
+      banner = {
+        width = 300
+        height = 250
+      }
+    }
+    creatives = [
+      {
+        creative_id = bms_creative.creative_1.creative_id
+        weight = 1
+      }
+    ]
+}
+
+output "bms_creative_group" {
+    value = bms_creative_group.creative_group_1
+}

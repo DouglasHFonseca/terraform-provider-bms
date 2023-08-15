@@ -90,23 +90,26 @@ func (r *creativeResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"name": schema.StringAttribute{
 				Required: true,
 			},
-			"banner": schema.SingleNestedAttribute{
-				Optional: true,
-				Attributes: map[string]schema.Attribute{
-					"width": schema.Int64Attribute{
-						Required: true,
-					},
-					"height": schema.Int64Attribute{
-						Required: true,
-					},
-					"snippet": schema.StringAttribute{
-						Required: true,
-					},
-				},
-			},
 			"archived": schema.BoolAttribute{
 				Optional: true,
 				Computed: true,
+			},
+		},
+		Blocks: map[string]schema.Block{
+			"banner": schema.ListNestedBlock{
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"width": schema.Int64Attribute{
+							Required: true,
+						},
+						"height": schema.Int64Attribute{
+							Required: true,
+						},
+						"snippet": schema.StringAttribute{
+							Required: true,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -123,10 +126,12 @@ func (r *creativeResource) Create(ctx context.Context, req resource.CreateReques
 
 	createFields := *openapi.NewCreativeCreateFields(plan.Domain.ValueString(), plan.Name.ValueString())
 
-	createFields.Banner = &openapi.CreativeCreateFieldsAllOfBanner{
-		Width:   float32(plan.Banner.Width.ValueInt64()),
-		Height:  float32(plan.Banner.Height.ValueInt64()),
-		Snippet: plan.Banner.Snippet.ValueString(),
+	if plan.Banner != nil {
+		var banners []*openapi.CreativeCreateFieldsAllOfBanner
+		for _, banner := range plan.Banner {
+			banners = append(banners, openapi.NewCreativeCreateFieldsAllOfBanner(float32(banner.Width.ValueInt64()), float32(banner.Height.ValueInt64()), banner.Snippet.ValueString()))
+		}
+		createFields.Banner = banners[0]
 	}
 
 	if plan.Tags != nil {
@@ -206,8 +211,13 @@ func (r *creativeResource) Update(ctx context.Context, req resource.UpdateReques
 	creativePatchFields := *openapi.NewCreativePatchFields()
 
 	creativePatchFields.Name = plan.Name.ValueStringPointer()
-	creativePatchFields.Banner = &openapi.BannerFields{
-		Snippet: plan.Banner.Snippet.ValueString(),
+
+	if plan.Banner != nil {
+		var banners []*openapi.BannerFields
+		for _, banner := range plan.Banner {
+			banners = append(banners, openapi.NewBannerFields(banner.Snippet.ValueString()))
+		}
+		creativePatchFields.Banner = banners[0]
 	}
 	for _, tag := range plan.Tags {
 		creativePatchFields.Tags = append(creativePatchFields.Tags, tag.ValueString())
@@ -294,11 +304,11 @@ func (r *creativeResource) OverwriteCreativeModel(creative openapi.Creative) cre
 		)
 	}
 
-	plan.Banner = bannerModel{
+	plan.Banner = append(plan.Banner, bannerModel{
 		Width:   types.Int64Value(int64(creative.Banner.Width)),
 		Height:  types.Int64Value(int64(creative.Banner.Height)),
 		Snippet: types.StringValue(creative.Banner.Snippet),
-	}
+	})
 
 	return plan
 }

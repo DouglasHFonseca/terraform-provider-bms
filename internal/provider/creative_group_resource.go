@@ -28,7 +28,7 @@ type creativeGroupModel struct {
 	Archived        types.Bool       `tfsdk:"archived"`
 	Domain          types.String     `tfsdk:"domain"`
 	Name            types.String     `tfsdk:"name"`
-	Spec            specModel        `tfsdk:"spec"`
+	Spec            []specModel      `tfsdk:"spec"`
 	Creatives       []creativesModel `tfsdk:"creatives"`
 }
 
@@ -40,7 +40,7 @@ type creativesModel struct {
 
 // specModel maps spec data.
 type specModel struct {
-	Banner bannerGroupModel `tfsdk:"banner"`
+	Banner []bannerGroupModel `tfsdk:"banner"`
 }
 
 // bannerGroupModel maps banner data.
@@ -119,25 +119,28 @@ func (r *creativeGroupResource) Schema(_ context.Context, _ resource.SchemaReque
 			"name": schema.StringAttribute{
 				Required: true,
 			},
-			"spec": schema.SingleNestedAttribute{
-				Required: true,
-				Attributes: map[string]schema.Attribute{
-					"banner": schema.SingleNestedAttribute{
-						Required: true,
-						Attributes: map[string]schema.Attribute{
-							"width": schema.Int64Attribute{
-								Required: true,
-							},
-							"height": schema.Int64Attribute{
-								Required: true,
+		},
+		Blocks: map[string]schema.Block{
+			"spec": schema.ListNestedBlock{
+				NestedObject: schema.NestedBlockObject{
+					Blocks: map[string]schema.Block{
+						"banner": schema.ListNestedBlock{
+							NestedObject: schema.NestedBlockObject{
+								Attributes: map[string]schema.Attribute{
+									"width": schema.Int64Attribute{
+										Required: true,
+									},
+									"height": schema.Int64Attribute{
+										Required: true,
+									},
+								},
 							},
 						},
 					},
 				},
 			},
-			"creatives": schema.ListNestedAttribute{
-				Required: true,
-				NestedObject: schema.NestedAttributeObject{
+			"creatives": schema.ListNestedBlock{
+				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"creative_id": schema.StringAttribute{
 							Required: true,
@@ -165,7 +168,16 @@ func (r *creativeGroupResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	var specFields openapi.CreativeSpec
-	specFields.Banner = openapi.NewBannerSpec(float32(plan.Spec.Banner.Width.ValueInt64()), float32(plan.Spec.Banner.Height.ValueInt64()))
+
+	if plan.Spec != nil {
+		if plan.Spec[0].Banner != nil {
+			var bannerFields []*openapi.BannerSpec
+			for _, banner := range plan.Spec[0].Banner {
+				bannerFields = append(bannerFields, openapi.NewBannerSpec(float32(banner.Width.ValueInt64()), float32(banner.Height.ValueInt64())))
+			}
+			specFields.Banner = bannerFields[0]
+		}
+	}
 
 	var creativesFields []openapi.WeightedCreative
 	for _, creative := range plan.Creatives {
@@ -338,12 +350,13 @@ func (r *creativeGroupResource) OverwriteCreativeGroupModel(creativeGroup openap
 		)
 	}
 
-	plan.Spec = specModel{
-		Banner: bannerGroupModel{
-			Width:  types.Int64Value(int64(creativeGroup.Spec.Banner.Width)),
+	plan.Spec = []specModel{}
+	plan.Spec = append(plan.Spec, specModel{
+		Banner: append([]bannerGroupModel{}, bannerGroupModel{
 			Height: types.Int64Value(int64(creativeGroup.Spec.Banner.Height)),
-		},
-	}
+			Width:  types.Int64Value(int64(creativeGroup.Spec.Banner.Width)),
+		}),
+	})
 
 	plan.Creatives = []creativesModel{}
 	for _, creative := range creativeGroup.Creatives {

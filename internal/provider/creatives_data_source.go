@@ -67,7 +67,7 @@ type creativeModel struct {
 	Tags       []types.String `tfsdk:"tags"`
 	Domain     types.String   `tfsdk:"domain"`
 	Name       types.String   `tfsdk:"name"`
-	Banner     bannerModel    `tfsdk:"banner"`
+	Banner     []bannerModel  `tfsdk:"banner"`
 	Archived   types.Bool     `tfsdk:"archived"`
 }
 
@@ -246,11 +246,14 @@ func (d *creativesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			Domain:     types.StringValue(creative.Domain),
 			Name:       types.StringValue(creative.Name),
 			Archived:   types.BoolValue(creative.Archived),
-			Banner: bannerModel{
+		}
+
+		if creative.Banner != nil {
+			creativeModel.Banner = append(creativeModel.Banner, bannerModel{
 				Width:   types.Int64Value(int64(creative.Banner.Width)),
 				Height:  types.Int64Value(int64(creative.Banner.Height)),
 				Snippet: types.StringValue(creative.Banner.Snippet),
-			},
+			})
 		}
 
 		for _, tag := range creative.Tags {

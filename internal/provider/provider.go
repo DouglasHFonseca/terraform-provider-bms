@@ -9,7 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	openapi "go-client-creative-management"
+	adopenapi "go-client-ad-management"
+	crativeopenapi "go-client-creative-management"
 	"os"
 )
 
@@ -37,8 +38,9 @@ type bmsProviderModel struct {
 }
 
 type providerConfig struct {
-	client    *openapi.APIClient
-	accountID string
+	clientCreative *crativeopenapi.APIClient
+	clientAd       *adopenapi.APIClient
+	accountID      string
 }
 
 // Metadata returns the provider type name.
@@ -58,9 +60,9 @@ func (p *bmsProviderModel) Schema(_ context.Context, _ provider.SchemaRequest, r
 	}
 }
 
-// Configure prepares a BMS API client for data sources and resources.
+// Configure prepares a BMS API clientCreative for data sources and resources.
 func (p *bmsProviderModel) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	tflog.Info(ctx, "Configuring BMS client")
+	tflog.Info(ctx, "Configuring BMS clientCreative")
 
 	var config bmsProviderModel
 	diags := req.Config.Get(ctx, &config)
@@ -74,7 +76,7 @@ func (p *bmsProviderModel) Configure(ctx context.Context, req provider.Configure
 		resp.Diagnostics.AddAttributeError(
 			path.Root("accountId"),
 			"Unknown BMS API AccountId",
-			"The provider cannot create the BMS API client as there is an unknown configuration value for the BMS API accountId.",
+			"The provider cannot create the BMS API clientCreative as there is an unknown configuration value for the BMS API accountId.",
 		)
 	}
 
@@ -88,7 +90,7 @@ func (p *bmsProviderModel) Configure(ctx context.Context, req provider.Configure
 		resp.Diagnostics.AddAttributeError(
 			path.Root("accountId"),
 			"Unknown BMS API AccountId",
-			"The provider cannot create the BMS API client as there is an unknown configuration value for the BMS API accountId.",
+			"The provider cannot create the BMS API clientCreative as there is an unknown configuration value for the BMS API accountId.",
 		)
 	}
 
@@ -98,19 +100,24 @@ func (p *bmsProviderModel) Configure(ctx context.Context, req provider.Configure
 
 	p.AccountID = types.StringValue(accountId)
 
-	cfg := openapi.NewConfiguration()
+	// Configure the BMS API clientCreative.
+	cfgCreative := crativeopenapi.NewConfiguration()
+	clientCreative := crativeopenapi.NewAPIClient(cfgCreative)
 
-	client := openapi.NewAPIClient(cfg)
+	// Configure the BMS API clientAd.
+	cfgAd := adopenapi.NewConfiguration()
+	clientAd := adopenapi.NewAPIClient(cfgAd)
 
 	configClient := &providerConfig{
-		client:    client,
-		accountID: accountId,
+		clientCreative: clientCreative,
+		clientAd:       clientAd,
+		accountID:      accountId,
 	}
 
 	resp.DataSourceData = configClient
 	resp.ResourceData = configClient
 
-	tflog.Info(ctx, "Configured BMS client", map[string]any{"success": true})
+	tflog.Info(ctx, "Configured BMS client Creative/Ad", map[string]any{"success": true})
 }
 
 // DataSources defines the data sources implemented in the provider.
@@ -125,5 +132,6 @@ func (p *bmsProviderModel) Resources(_ context.Context) []func() resource.Resour
 	return []func() resource.Resource{
 		NewCreativeResource,
 		NewCreativeGroupResource,
+		NewAdResource,
 	}
 }

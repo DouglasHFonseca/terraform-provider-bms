@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
@@ -20,7 +21,7 @@ var (
 	_ resource.ResourceWithConfigure = &creativeGroupResource{}
 )
 
-// creativeGroupModel maps creative schema data.
+// creativeGroupModel maps creative group schema data.
 type creativeGroupModel struct {
 	CreativeGroupId types.String     `tfsdk:"creative_group_id"`
 	AccountId       types.String     `tfsdk:"account_id"`
@@ -60,7 +61,7 @@ type creativeGroupResource struct {
 	accountID string
 }
 
-// Configure adds the provider configured client to the resource.
+// Configure adds the provider configured clientCreative to the resource.
 func (r *creativeGroupResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -77,13 +78,13 @@ func (r *creativeGroupResource) Configure(_ context.Context, req resource.Config
 		return
 	}
 
-	r.client = config.client
+	r.client = config.clientCreative
 	r.accountID = config.accountID
 }
 
 // Metadata returns the resource type name.
 func (r *creativeGroupResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_creative_group"
+	resp.TypeName = req.ProviderTypeName + "_ads_creative_group"
 }
 
 // Schema defines the schema for the resource.
@@ -122,6 +123,10 @@ func (r *creativeGroupResource) Schema(_ context.Context, _ resource.SchemaReque
 		},
 		Blocks: map[string]schema.Block{
 			"spec": schema.ListNestedBlock{
+				Validators: []validator.List{
+					listvalidator.SizeAtLeast(1),
+					listvalidator.SizeAtMost(1),
+				},
 				NestedObject: schema.NestedBlockObject{
 					Blocks: map[string]schema.Block{
 						"banner": schema.ListNestedBlock{
@@ -140,6 +145,9 @@ func (r *creativeGroupResource) Schema(_ context.Context, _ resource.SchemaReque
 				},
 			},
 			"creatives": schema.ListNestedBlock{
+				Validators: []validator.List{
+					listvalidator.SizeAtLeast(1),
+				},
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"creative_id": schema.StringAttribute{

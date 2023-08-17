@@ -78,7 +78,7 @@ type bannerModel struct {
 	Snippet types.String `tfsdk:"snippet"`
 }
 
-// Configure adds the provider configured client to the data source.
+// Configure adds the provider configured clientCreative to the data source.
 func (d *creativesDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -94,7 +94,7 @@ func (d *creativesDataSource) Configure(_ context.Context, req datasource.Config
 		return
 	}
 
-	d.client = config.client
+	d.client = config.clientCreative
 	d.accountID = config.accountID
 }
 
@@ -240,7 +240,7 @@ func (d *creativesDataSource) Read(ctx context.Context, req datasource.ReadReque
 	for _, creative := range creatives {
 		creativeModel := creativeModel{
 			CreativeId: types.StringValue(creative.CreativeId),
-			Status:     types.StringValue(string(creative.Status)),
+			Status:     types.StringValue(creative.Status),
 			AccountId:  types.StringValue(creative.AccountId),
 			Enabled:    types.BoolValue(creative.Enabled),
 			Domain:     types.StringValue(creative.Domain),

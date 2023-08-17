@@ -28,7 +28,7 @@ type creativeResource struct {
 	accountID string
 }
 
-// Configure adds the provider configured client to the resource.
+// Configure adds the provider configured clientCreative to the resource.
 func (r *creativeResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -38,20 +38,20 @@ func (r *creativeResource) Configure(_ context.Context, req resource.ConfigureRe
 
 	if !ok {
 		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
+			"Unexpected Data Configure Type",
 			fmt.Sprintf("Expected *openapi.APIClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
 	}
 
-	r.client = config.client
+	r.client = config.clientCreative
 	r.accountID = config.accountID
 }
 
 // Metadata returns the resource type name.
 func (r *creativeResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_creative"
+	resp.TypeName = req.ProviderTypeName + "_ads_creative"
 }
 
 // Schema defines the schema for the resource.

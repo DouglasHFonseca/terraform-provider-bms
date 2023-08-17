@@ -1,0 +1,1004 @@
+openapi: 3.0.0
+info:
+  title: AdServer Ad Management
+  version: "1.0"
+servers:
+- description: Internal Development
+  url: http://api.ad.ads.sd.internal.us-east-2.bluemsdev.team
+- description: Internal Production
+  url: http://api.ad.ads.sd.internal.us-east-1.bluems.com
+- description: Local
+  url: http://localhost:5075
+tags:
+- name: Ads
+- name: Exchange Reviews
+paths:
+  /v1/accounts/{accountId}/ads:
+    get:
+      description: Returns a pageable list of ads.
+      operationId: ListAds
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: "The applicable filters, a json object according with `AdFilters`."
+        explode: true
+        in: query
+        name: filters
+        required: false
+        schema:
+          example: "{}"
+          type: string
+        style: form
+      - description: The page size.
+        explode: true
+        in: query
+        name: pageSize
+        required: false
+        schema:
+          default: 10
+          example: 10
+          maximum: 1000
+          minimum: 1
+          type: number
+        style: form
+      - allowEmptyValue: true
+        description: The page token from which to continue listing.
+        explode: true
+        in: query
+        name: pageToken
+        required: false
+        schema:
+          example: AIUHSDJANBDHOH3
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdPage'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Bad Request
+      summary: List Ads
+      tags:
+      - Ads
+    post:
+      description: |-
+        Creates a new ad.
+
+        **Notes:**
+        1. All creative groups must match the domain and spec defined (e.g. a banner 728x90 linking to example.com).
+        1. Publishes event `AdCreatedEvent` with the ad as message.
+      operationId: CreateAd
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdCreateFields'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ad'
+          description: Created
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Bad Request
+      summary: Create Ad
+      tags:
+      - Ads
+  /v1/accounts/{accountId}/ads/{adId}:
+    delete:
+      description: |-
+        Deletes a ad.
+
+        **Notes:**
+        1. Publishes event `AdDeletedEvent` with the original ad as message.
+      operationId: DeleteAd
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: The ID of the ad.
+        explode: false
+        in: path
+        name: adId
+        required: true
+        schema:
+          example: ujsDTSszw04YaXiTIE2VN8NRY2W
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: No Content
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Not Found
+      summary: Delete Ad
+      tags:
+      - Ads
+    get:
+      description: Returns a ad by its ID.
+      operationId: GetAd
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: The ID of the ad.
+        explode: false
+        in: path
+        name: adId
+        required: true
+        schema:
+          example: ujsDTSszw04YaXiTIE2VN8NRY2W
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ad'
+          description: OK
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Not Found
+      summary: Get Ad
+      tags:
+      - Ads
+    patch:
+      description: |-
+        Patches a ad.
+
+        **Notes:**
+        1. All creative groups must match the domain and spec defined (e.g. a banner 728x90 linking to example.com).
+        1. Publishes event `AdPatchedEvent` with the patched ad as message.
+      operationId: PatchAd
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: The ID of the ad.
+        explode: false
+        in: path
+        name: adId
+        required: true
+        schema:
+          example: ujsDTSszw04YaXiTIE2VN8NRY2W
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: '#/components/schemas/AdPatchFields'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ad'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Bad Request
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Not Found
+      summary: Patch Ad
+      tags:
+      - Ads
+  /v1/accounts/{accountId}/ads/{adId}/rules:active:
+    get:
+      description: |-
+        Returns the active rules of an ad.
+
+        The list should contain only rules that are enabled and that have at least one creative available.
+      operationId: GetAdActiveRules
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: The ID of the ad.
+        explode: false
+        in: path
+        name: adId
+        required: true
+        schema:
+          example: ujsDTSszw04YaXiTIE2VN8NRY2W
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ActiveAdRule'
+                type: array
+          description: OK
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Not Found
+      summary: Get Ad Active Rules
+      tags:
+      - Ads
+  /v1/accounts/{accountId}/ads/{adId}/exchange-reviews:
+    post:
+      description: "Initiates the review process for the given ad.\n\n**Notes:**\n\
+        1. You can only perform this action if the ad has active rules (as in `GET\
+        \ rules:active`). If the ad has no active rules, an error should be returned.\n\
+        1. If the ad already has a review for the exchange with status `approved`,\
+        \ an error should be returned.\n1. Adds an entry to the ad's exchangeReviews\
+        \ array for each exchangeId with the status `queued`. If an exchange review\
+        \ already exists, its status should be changed to `queued`.\n1. Publishes\
+        \ event `AdPatchedEvent` with the patched ad as message.\n1. Publishes command\
+        \ `SendAdForExchangeReviewCommand` with the message: \n    ```\n    { \n \
+        \      accountId: string, \n       adId: string, \n       exchangeIds: string[]\
+        \ \n    }\n    ```"
+      operationId: SendAdForExchangeReview
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: The ID of the ad.
+        explode: false
+        in: path
+        name: adId
+        required: true
+        schema:
+          example: ujsDTSszw04YaXiTIE2VN8NRY2W
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExchangeReviewCreateFields'
+        required: true
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Bad Request
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Not Found
+      summary: Send Ad for Exchange Review
+      tags:
+      - Exchange Reviews
+  /v1/accounts/{accountId}/ads/{adId}/exchange-reviews:refresh:
+    post:
+      description: "Refreshes the review status of the ad on the requested ad exchanges.\n\
+        \n**Notes:**\n1. Publishes command `RefreshExchangeReviewStatusCommand` with\
+        \ the message: \n    ```\n    { \n       accountId: string, \n       adId:\
+        \ string, \n       exchangeIds: string[] \n    }\n    ```"
+      operationId: RefreshExchangeReviewStatus
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: The ID of the ad.
+        explode: false
+        in: path
+        name: adId
+        required: true
+        schema:
+          example: ujsDTSszw04YaXiTIE2VN8NRY2W
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExchangeReviewCreateFields'
+        required: true
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Bad Request
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Not Found
+      summary: Refresh Exchange Review Status
+      tags:
+      - Exchange Reviews
+  /v1/accounts/{accountId}/ads/{adId}/exchange-reviews/{exchangeId}:
+    put:
+      description: |-
+        Updates the exchange review in a given ad for a given exchange.
+
+        **Notes:**
+        1. This endpoint will be called by the exchange integrations when they become aware that a review has been updated.
+        1. Publishes event `AdPatchedEvent` with the patched ad as message.
+      operationId: PutExchangeReview
+      parameters:
+      - description: The ID of the account.
+        explode: false
+        in: path
+        name: accountId
+        required: true
+        schema:
+          example: "359312844241"
+          type: string
+        style: simple
+      - description: The ID of the ad.
+        explode: false
+        in: path
+        name: adId
+        required: true
+        schema:
+          example: ujsDTSszw04YaXiTIE2VN8NRY2W
+          type: string
+        style: simple
+      - description: The ID of the exchange.
+        explode: false
+        in: path
+        name: exchangeId
+        required: true
+        schema:
+          example: adx
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExchangeReviewPutFields'
+        required: true
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Bad Request
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+          description: Not Found
+      summary: Put Exchange Review
+      tags:
+      - Exchange Reviews
+components:
+  parameters:
+    AccountId:
+      description: The ID of the account.
+      explode: false
+      in: path
+      name: accountId
+      required: true
+      schema:
+        example: "359312844241"
+        type: string
+      style: simple
+    PageSize:
+      description: The page size.
+      explode: true
+      in: query
+      name: pageSize
+      required: false
+      schema:
+        default: 10
+        example: 10
+        maximum: 1000
+        minimum: 1
+        type: number
+      style: form
+    PageToken:
+      allowEmptyValue: true
+      description: The page token from which to continue listing.
+      explode: true
+      in: query
+      name: pageToken
+      required: false
+      schema:
+        example: AIUHSDJANBDHOH3
+        type: string
+      style: form
+  responses:
+    BadRequest:
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+      description: Bad Request
+    NotFound:
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+      description: Not Found
+  schemas:
+    AdRule:
+      description: Represents a rule that dictates when a creative group should be
+        rendered.
+      example:
+        name: "Weekdays, 14-16h"
+        adRuleId: NXiWszwDTS8NR0ujsTIE2VY24Ya
+        conditions:
+        - type: schedule
+        - type: schedule
+        creativeGroupId: 0ujsszwN8NRY24YaXiTIE2VWDTS
+        enabled: true
+      properties:
+        adRuleId:
+          description: The rule ID. Leave an empty string if creating a new rule.
+          example: NXiWszwDTS8NR0ujsTIE2VY24Ya
+          type: string
+        name:
+          description: A name of this rule.
+          example: "Weekdays, 14-16h"
+          type: string
+        conditions:
+          description: "The conditions that must be `true` for this rule to be applicable.\
+            \ If no conditions are specified, the rule will match."
+          items:
+            $ref: '#/components/schemas/Condition'
+          type: array
+        creativeGroupId:
+          description: The ID of the creative group.
+          example: 0ujsszwN8NRY24YaXiTIE2VWDTS
+          type: string
+        enabled:
+          description: Indicates if this rule is enabled and should be evaluated.
+          type: boolean
+      required:
+      - adRuleId
+      - conditions
+      - creativeGroupId
+      - enabled
+      - name
+      title: AdRule
+      type: object
+    ActiveAdRule:
+      allOf:
+      - $ref: '#/components/schemas/AdRule'
+      - description: Contains the creatives that are active for this rule
+        properties:
+          availableCreatives:
+            description: Contains the creatives that are active for this rule.
+            items:
+              $ref: '#/components/schemas/Ads--creative_AvailableCreative'
+            type: array
+        type: object
+      description: Represents an ad rule that is available for printing.
+      title: ActiveAdRule
+    Condition:
+      description: |-
+        Represents a condition under which an `AdRule` can become applicable.
+
+        Base model. Please use one of the subclasses: `ScheduleCondition`.
+      example:
+        type: schedule
+      properties:
+        type:
+          description: Indicates the type of condition.
+          example: schedule
+          type: string
+      required:
+      - type
+      title: Condition
+      type: object
+    ScheduleCondition:
+      allOf:
+      - $ref: '#/components/schemas/Condition'
+      - properties:
+          type:
+            description: Indicates the type of condition.
+            enum:
+            - schedule
+            example: schedule
+            type: string
+          start:
+            description: The point in time when this condition becomes valid.
+            example: 2022-07-01T10:12:12Z
+            format: date-time
+            type: string
+          end:
+            description: "The point in time when this condition stops being valid,\
+              \ must be after `start` if it has been defined."
+            example: 2022-07-01T13:30:35Z
+            format: date-time
+            type: string
+          timesOfWeek:
+            description: The windows within a week where this condition is applicable.
+              The time zone used for reference will be the one in use by the user
+              viewing the ad.
+            items:
+              $ref: '#/components/schemas/TimeOfWeek'
+            type: array
+        required:
+        - type
+        type: object
+      description: A `Condition` that defines time-based criteria for `AdRules`.
+      title: ScheduleCondition
+    TimeOfWeek:
+      description: Represents a time window in a week.
+      properties:
+        start:
+          description: "Indicates when the window starts in number of minutes since\
+            \ Sunday, midnight."
+          example: 100
+          maximum: 10080
+          minimum: 0
+          type: number
+        end:
+          description: "Indicates when the window ends in number of minutes since\
+            \ Sunday midnight, must be after `start`."
+          example: 1100
+          maximum: 10080
+          minimum: 0
+          type: number
+      required:
+      - end
+      - start
+      title: TimeOfWeek
+      type: object
+    Ad:
+      allOf:
+      - properties:
+          adId:
+            description: The ID of the ad.
+            example: ujsDTSszw04YaXiTIE2VN8NRY2W
+            type: string
+          accountId:
+            description: The ID of the account that owns this ad.
+            example: "359312844241"
+            type: string
+          exchangeReviews:
+            description: Reviews for all applicable exchanges.
+            items:
+              $ref: '#/components/schemas/ExchangeReview'
+            type: array
+          tags:
+            description: Tags that the user can add to facilitate searching.
+            items:
+              example: summer
+              type: string
+            type: array
+          archived:
+            description: Indicates if it is archived.
+            type: boolean
+        required:
+        - accountId
+        - adId
+        - archived
+        - exchangeReviews
+        - tags
+        type: object
+      - $ref: '#/components/schemas/AdCreateFields'
+      description: Represents an ad including all displayable creative groups and
+        their conditions alongside with all reviews made by the exchanges.
+      title: Ad
+    AdCreateFields:
+      description: '`Ad` required fields.'
+      example:
+        domain: example.com
+        name: Example.com summer banner 728x90
+        rules:
+        - name: "Weekdays, 14-16h"
+          adRuleId: NXiWszwDTS8NR0ujsTIE2VY24Ya
+          conditions:
+          - type: schedule
+          - type: schedule
+          creativeGroupId: 0ujsszwN8NRY24YaXiTIE2VWDTS
+          enabled: true
+        - name: "Weekdays, 14-16h"
+          adRuleId: NXiWszwDTS8NR0ujsTIE2VY24Ya
+          conditions:
+          - type: schedule
+          - type: schedule
+          creativeGroupId: 0ujsszwN8NRY24YaXiTIE2VWDTS
+          enabled: true
+        spec:
+          banner:
+            width: 728
+            height: 90
+        tags:
+        - summer
+        - summer
+      properties:
+        domain:
+          description: The domain that this ad is going to redirect to.
+          example: example.com
+          type: string
+        name:
+          description: The name of this ad.
+          example: Example.com summer banner 728x90
+          type: string
+        spec:
+          $ref: '#/components/schemas/Ads--creative_CreativeSpec'
+        rules:
+          description: The rules that specify what are the conditions to display a
+            creative group.
+          items:
+            $ref: '#/components/schemas/AdRule'
+          type: array
+        tags:
+          description: Tags that the user can add to facilitate searching.
+          items:
+            example: summer
+            type: string
+          type: array
+      required:
+      - domain
+      - name
+      - rules
+      - spec
+      title: AdCreateFields
+      type: object
+    AdPatchFields:
+      description: '`Ad` editable fields.'
+      properties:
+        name:
+          description: The name of the ad.
+          example: Example.com summer banner 728x90
+          type: string
+        rules:
+          description: The rules that specify what are the conditions to display a
+            creative group.
+          items:
+            $ref: '#/components/schemas/AdRule'
+          type: array
+        tags:
+          description: Tags that the user can add to facilitate searching.
+          items:
+            type: string
+          type: array
+        archived:
+          description: Indicates if it is archived.
+          type: boolean
+      title: AdPatchFields
+      type: object
+    AdFilters:
+      description: Filters applicable to ads.
+      properties:
+        search:
+          description: "Generic search that can match against id, name, tag and domain."
+          example: socks
+          type: string
+        adIds:
+          description: The IDs of the ads to search for.
+          items:
+            example: ujsDTSszw04YaXiTIE2VN8NRY2W
+            type: string
+          type: array
+        domain:
+          description: The domain to search for.
+          example: example.com
+          type: string
+        creativeGroupIds:
+          description: The list of creative group IDs to search usage for.
+          items:
+            example: 0ujsszwN8NRY24YaXiTIE2VWDTS
+            type: string
+          type: array
+        name:
+          description: The name to search for.
+          example: socks
+          type: string
+        archived:
+          description: "`true` to include only archived creative groups, `false` to\
+            \ include only active, leave empty to include all."
+          type: boolean
+        tag:
+          description: The tags to look for.
+          example: winter
+          type: string
+        spec:
+          $ref: '#/components/schemas/Ads--creative_CreativeSpec'
+        exchangeReviewStatus:
+          description: Include only ads that have at least one exchange review with
+            the indicated status.
+          enum:
+          - queued
+          - reviewing
+          - approved
+          - rejected
+          - revoked
+          example: approved
+          type: string
+      title: AdFilters
+      type: object
+    ExchangeReview:
+      allOf:
+      - properties:
+          exchangeId:
+            description: The exchange ID for this review.
+            example: adx
+            type: string
+          updatedAt:
+            description: When the review was last updated.
+            example: 2022-07-01T13:30:35Z
+            format: date-time
+            type: string
+        required:
+        - exchangeId
+        - updatedAt
+        type: object
+      - $ref: '#/components/schemas/ExchangeReviewPutFields'
+      description: Represents the review made by or requested to an exchange.
+      title: ExchangeReview
+    ExchangeReviewCreateFields:
+      description: List of exchange ids where the review should be created.
+      example:
+        exchangeIds:
+        - adx
+        - adx
+      properties:
+        exchangeIds:
+          description: The IDs of the exchange where reviews are to be requested.
+          items:
+            example: adx
+            type: string
+          type: array
+      required:
+      - exchangeIds
+      title: ExchangeReviewCreateFields
+      type: object
+    ExchangeReviewPutFields:
+      description: '`ExchangeReview` editable fields.'
+      example:
+        comments: The ad was not approved because it included images of alcohol
+        exchangeReviewId: prd-ujsDTSszw04YaXiTIE2VN8NRY2W
+        status: approved
+      properties:
+        exchangeReviewId:
+          description: The ID of the review to be used later when submitting bids
+            to display the ad this review refers to.
+          example: prd-ujsDTSszw04YaXiTIE2VN8NRY2W
+          type: string
+        status:
+          description: |-
+            Indicates the status of the review:
+            * `queued`: The ad is in the exchange submission queue.
+            * `reviewing`: The exchange has received the ad and is reviewing it.
+            * `approved`: The exchange has reviewed the ad and approved it.
+            * `rejected`: The exchange has reviewed the ad and rejected it. Some details of why or what can be done can be found in the `comments` field.
+            * `revoked`: The exchange has previously reviewed and approved the ad, but the approval was revoked. Some details of why or what can be done can be found in the `comments` field.
+          enum:
+          - queued
+          - reviewing
+          - approved
+          - rejected
+          - revoked
+          example: approved
+          type: string
+        comments:
+          description: Any comments that the exchange reviewer deem important.
+          example: The ad was not approved because it included images of alcohol
+          type: string
+      required:
+      - exchangeReviewId
+      - status
+      title: ExchangeReviewPutFields
+      type: object
+      x-stoplight:
+        id: vyaf2rq2m1cjc
+    AdPage:
+      description: Represents a page of ads.
+      example:
+        nextPageToken: kprVA0PjOy0y86PHZVSq
+        values:
+        - null
+        - null
+      properties:
+        values:
+          description: The values on this page.
+          items:
+            $ref: '#/components/schemas/Ad'
+          type: array
+        nextPageToken:
+          description: The token to be used to retrieve the next page.
+          example: kprVA0PjOy0y86PHZVSq
+          nullable: true
+          type: string
+      required:
+      - values
+      title: AdPage
+      type: object
+    ProblemDetails:
+      description: Represents a problem that happened.
+      properties:
+        type:
+          description: URI or relative path that defines what the problem is.
+          example: http://example.com/problems/already-available
+          type: string
+        title:
+          description: A short human-readable message of the problem type.
+          example: Cannot set product as available.
+          type: string
+        status:
+          description: The status member represents the same HTTP status code.
+          example: 400
+          type: integer
+        detail:
+          description: Human-readable explanation of the exact issue that occurred.
+          example: Product is already Available For Sale.
+          type: string
+      required:
+      - detail
+      - status
+      - title
+      - type
+      title: ProblemDetails
+      type: object
+    Ads--creative_AvailableCreative:
+      allOf:
+      - $ref: '#/components/schemas/Ads--creative_WeightedCreative'
+      - $ref: '#/components/schemas/Ads--creative_CreativeFields'
+      description: Represents a creative that is available for printing with its relative
+        weight.
+      title: AvailableCreative
+    Ads--creative_BannerFields:
+      additionalProperties: false
+      description: Describes a banner that can be served.
+      properties:
+        snippet:
+          description: The HTML snippet that will be rendered.
+          example: <a href="https://example.com/"><img src="https://via.placeholder.com/728x90"></a>
+          type: string
+      required:
+      - snippet
+      title: BannerFields
+      type: object
+    Ads--creative_BannerSpec:
+      additionalProperties: false
+      description: Specifies the requirements for banners.
+      example:
+        width: 728
+        height: 90
+      properties:
+        width:
+          description: The width of the banner in pixels.
+          example: 728
+          type: number
+        height:
+          description: The height of the banner in pixels.
+          example: 90
+          type: number
+      required:
+      - height
+      - width
+      title: BannerSpec
+      type: object
+    Ads--creative_CreativeFields:
+      additionalProperties: false
+      description: Specifies editable fields that define creatives.
+      properties:
+        banner:
+          $ref: '#/components/schemas/Ads--creative_BannerFields'
+      title: CreativeFields
+      type: object
+    Ads--creative_CreativeSpec:
+      additionalProperties: false
+      description: Specifies the requirements for creatives.
+      example:
+        banner:
+          width: 728
+          height: 90
+      properties:
+        banner:
+          $ref: '#/components/schemas/Ads--creative_BannerSpec'
+      title: CreativeSpec
+      type: object
+    Ads--creative_WeightedCreative:
+      additionalProperties: false
+      description: Represents a creative and its weight.
+      properties:
+        creativeId:
+          description: The ID of the creative.
+          example: 0ujssxh0cECutqzMgbtXSGnjorm
+          type: string
+        weight:
+          description: The weight of the creative.
+          example: 100
+          maximum: 999
+          minimum: 0
+          type: number
+      required:
+      - creativeId
+      - weight
+      title: WeightedCreative
+      type: object
+x-stoplight:
+  id: 16317456092c7

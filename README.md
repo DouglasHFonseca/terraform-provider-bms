@@ -8,7 +8,12 @@ This repository is built on the [Terraform Plugin Framework](https://github.com/
 - [Go](https://golang.org/doc/install) >= 1.19
 
 ## Prepare Terraform for local provider install
-- Create a new file called `.terraformrc` in your home directory (`~`), then add the `dev_overrides` block below.
+
+- First, find the GOBIN path where Go installs its binaries. This path may vary depending on how your Go environment variables are set up.
+  - Run `go env GOBIN` to find out. If it's not set, you will need to define it by running the command `export GOBIN=/usr/local/go/bin.`
+
+  
+  - With the appropriate settings made as mentioned above, proceed with the override. Create a file called .terraformrc in your root directory (~) and add the dev_overrides block below. Change the <PATH> to the value returned from the go env GOBIN command mentioned earlier, keeping in mind that if it's not set, the path will be what was defined in the export above.
 
 ```
 provider_installation {
@@ -31,7 +36,7 @@ provider_installation {
 1. Build the provider using the Go `install` command:
 
 ```shell
-go install
+go install .
 ```
 
 ## Adding Dependencies
@@ -51,19 +56,4 @@ Then commit the changes to `go.mod` and `go.sum`.
 ## Using the provider
 
 Fill this in for each provider
-
-## Developing the Provider
-
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (see [Requirements](#requirements) above).
-
-To compile the provider, run `go install`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
-
-To generate or update documentation, run `go generate`.
-
-In order to run the full suite of Acceptance tests, run `make testacc`.
-
-*Note:* Acceptance tests create real resources, and often cost money to run.
-
-```shell
-make testacc
-```
+- After that, run terraform apply on the main.tf file located in the examples folder.

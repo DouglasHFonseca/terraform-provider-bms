@@ -30,7 +30,7 @@ type creativeGroupModel struct {
 	Domain          types.String     `tfsdk:"domain"`
 	Name            types.String     `tfsdk:"name"`
 	Spec            []specModel      `tfsdk:"spec"`
-	Creatives       []creativesModel `tfsdk:"creatives"`
+	Creatives       []creativesModel `tfsdk:"creative"`
 }
 
 // creativesModel maps creatives data.
@@ -144,7 +144,7 @@ func (r *creativeGroupResource) Schema(_ context.Context, _ resource.SchemaReque
 					},
 				},
 			},
-			"creatives": schema.ListNestedBlock{
+			"creative": schema.ListNestedBlock{
 				Validators: []validator.List{
 					listvalidator.SizeAtLeast(1),
 				},

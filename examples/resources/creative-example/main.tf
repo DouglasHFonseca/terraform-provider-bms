@@ -51,12 +51,12 @@ resource "bms_ads_creative_group" "creative_group_1" {
     }
   }
 
-  creatives {
+  creative {
     creative_id = bms_ads_creative.creative_1.creative_id
     weight      = 1
   }
 
-  creatives {
+  creative {
     creative_id = bms_ads_creative.creative_2.creative_id
     weight      = 2
   }

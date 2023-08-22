@@ -24,7 +24,7 @@ type AdRule struct {
 	// A name of this rule.
 	Name string `json:"name"`
 	// The conditions that must be `true` for this rule to be applicable. If no conditions are specified, the rule will match.
-	Conditions []Condition `json:"conditions"`
+	Conditions []ScheduleCondition `json:"conditions"`
 	// The ID of the creative group.
 	CreativeGroupId string `json:"creativeGroupId"`
 	// Indicates if this rule is enabled and should be evaluated.
@@ -35,7 +35,7 @@ type AdRule struct {
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewAdRule(adRuleId string, name string, conditions []Condition, creativeGroupId string, enabled bool) *AdRule {
+func NewAdRule(adRuleId string, name string, conditions []ScheduleCondition, creativeGroupId string, enabled bool) *AdRule {
 	this := AdRule{}
 	this.AdRuleId = adRuleId
 	this.Name = name
@@ -102,9 +102,9 @@ func (o *AdRule) SetName(v string) {
 }
 
 // GetConditions returns the Conditions field value
-func (o *AdRule) GetConditions() []Condition {
+func (o *AdRule) GetConditions() []ScheduleCondition {
 	if o == nil {
-		var ret []Condition
+		var ret []ScheduleCondition
 		return ret
 	}
 
@@ -113,7 +113,7 @@ func (o *AdRule) GetConditions() []Condition {
 
 // GetConditionsOk returns a tuple with the Conditions field value
 // and a boolean to check if the value has been set.
-func (o *AdRule) GetConditionsOk() ([]Condition, bool) {
+func (o *AdRule) GetConditionsOk() ([]ScheduleCondition, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -121,7 +121,7 @@ func (o *AdRule) GetConditionsOk() ([]Condition, bool) {
 }
 
 // SetConditions sets field value
-func (o *AdRule) SetConditions(v []Condition) {
+func (o *AdRule) SetConditions(v []ScheduleCondition) {
 	o.Conditions = v
 }
 

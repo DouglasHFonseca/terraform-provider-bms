@@ -51,7 +51,7 @@ type conditionModel struct {
 	Type        types.String       `tfsdk:"type"`
 	Start       types.String       `tfsdk:"start"`
 	End         types.String       `tfsdk:"end"`
-	TimesOfWeek []timesOfWeekModel `tfsdk:"times_of_week"`
+	TimesOfWeek []timesOfWeekModel `tfsdk:"time_of_week"`
 }
 
 // timesOfWeekModel maps times of week schema data.
@@ -222,7 +222,7 @@ func (r *adResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *r
 									},
 								},
 								Blocks: map[string]schema.Block{
-									"times_of_week": schema.ListNestedBlock{
+									"time_of_week": schema.ListNestedBlock{
 										NestedObject: schema.NestedBlockObject{
 											Attributes: map[string]schema.Attribute{
 												"start": schema.Int64Attribute{
@@ -287,9 +287,36 @@ func (r *adResource) Create(ctx context.Context, req resource.CreateRequest, res
 
 	var rules []openapi.AdRule
 	for _, rule := range plan.Rules {
-		var conditions []openapi.Condition
+		var conditions []openapi.ScheduleCondition
 		for _, condition := range rule.Conditions {
-			conditions = append(conditions, *openapi.NewCondition(condition.Type.ValueString()))
+			newCondition := *openapi.NewScheduleCondition(condition.Type.ValueString())
+
+			startValue, err := time.Parse(time.RFC3339, condition.Start.ValueString())
+
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Error parsing start time",
+					fmt.Sprintf("Error parsing start time: %s", err),
+				)
+				return
+			}
+			newCondition.Start = &startValue
+
+			endValue, err2 := time.Parse(time.RFC3339, condition.End.ValueString())
+
+			if err2 != nil {
+				resp.Diagnostics.AddError(
+					"Error parsing end time",
+					fmt.Sprintf("Error parsing end time: %s", err),
+				)
+				return
+			}
+			newCondition.End = &endValue
+
+			for _, timeOfWeek := range condition.TimesOfWeek {
+				newCondition.TimesOfWeek = append(newCondition.TimesOfWeek, *openapi.NewTimeOfWeek(float32(timeOfWeek.Start.ValueInt64()), float32(timeOfWeek.End.ValueInt64())))
+			}
+			conditions = append(conditions, newCondition)
 		}
 		rules = append(rules, *openapi.NewAdRule(rule.AdRuleId.ValueString(), rule.Name.ValueString(), conditions, rule.CreativeGroupId.ValueString(), rule.Enabled.ValueBool()))
 	}
@@ -379,9 +406,9 @@ func (r *adResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	adPatchFields.Archived = plan.Archived.ValueBoolPointer()
 
 	for _, rule := range plan.Rules {
-		var conditions []openapi.Condition
+		var conditions []openapi.ScheduleCondition
 		for _, condition := range rule.Conditions {
-			conditions = append(conditions, *openapi.NewCondition(condition.Type.ValueString()))
+			conditions = append(conditions, *openapi.NewScheduleCondition(condition.Type.ValueString()))
 		}
 		adPatchFields.Rules = append(adPatchFields.Rules, *openapi.NewAdRule(rule.AdRuleId.ValueString(), rule.Name.ValueString(), conditions, rule.CreativeGroupId.ValueString(), rule.Enabled.ValueBool()))
 	}
@@ -496,19 +523,17 @@ func (r *adResource) OverwriteAdModel(ad openapi.Ad) adModel {
 		})
 		for index, condition := range rule.Conditions {
 			plan.Rules[index].Conditions = append(plan.Rules[index].Conditions, conditionModel{
-				Type: types.StringValue(condition.Type),
-				//TODO - Need to resolve inconsistency in stoplight
-				//Start: types.StringValue(condition.Start.Format(time.RFC3339)),
-				//End:   types.StringValue(condition.End.Format(time.RFC3339)),
+				Type:  types.StringValue(condition.Type),
+				Start: types.StringValue(condition.Start.Format(time.RFC3339)),
+				End:   types.StringValue(condition.End.Format(time.RFC3339)),
 			})
 
-			//TODO - Need to resolve inconsistency in stoplight
-			//for index2, timeOfWeek := range condition.TimesOfWeek {
-			//	plan.Rules[index].Conditions[index2].TimesOfWeek = append(plan.Rules[index].Conditions[index2].TimesOfWeek, timesOfWeekModel{
-			//		Start: types.Int64Value(int64(timeOfWeek.Start)),
-			//		End:   types.Int64Value(int64(timeOfWeek.End)),
-			//	})
-			//}
+			for _, timeOfWeek := range condition.TimesOfWeek {
+				plan.Rules[index].Conditions[index].TimesOfWeek = append(plan.Rules[index].Conditions[index].TimesOfWeek, timesOfWeekModel{
+					Start: types.Int64Value(int64(timeOfWeek.Start)),
+					End:   types.Int64Value(int64(timeOfWeek.End)),
+				})
+			}
 		}
 	}
 

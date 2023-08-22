@@ -83,7 +83,28 @@ resource "bms_ads_ad" "ad_1" {
     creative_group_id = bms_ads_creative_group.creative_group_1.creative_group_id
 
     schedule_condition {
-      type = "schedule"
+      type  = "schedule"
+      start = "2022-07-01T10:12:12Z"
+      end   = "2022-07-31T00:35:15Z"
+
+      time_of_week {
+        start = 100
+        end   = 150
+      }
+
+      time_of_week {
+        start = 300
+        end   = 350
+      }
+
+      time_of_week {
+        start = 400
+        end   = 450
+      }
     }
   }
+}
+
+output "bms_ads_ad" {
+  value = bms_ads_ad.ad_1
 }
